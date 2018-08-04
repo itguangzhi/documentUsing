@@ -39,6 +39,7 @@
 # @Date  : ${DATE} - ${TIME}
 # @Desc  :
 import datetime
+from Util import Properties
 
 import pymysql
 import xlrd
@@ -108,7 +109,16 @@ class KPI_earn():
         timeline = str(int(int(jiaban.seconds) / 1800) * 0.5)
         return timeline
 
-    def signINdata(fileyear: str, filemonth: str):
+
+    def signINdata(fileyear: str, filemonth: str, ucslist):
+        # 这是一个数据清洗，将数据清洗为
+        #                   人名，
+        #                   打卡日期，
+        #                   打卡日期是周几，
+        #                   真实早晨打卡时间
+        #                   真实晚上打卡时间，
+        #                   早晨打卡时间（如果没有打卡，用 - 补全）
+        #                   晚上打卡时间（如果没有打卡，用 - 补全）
         LT = []
 
         # 遍历全公司的人名
@@ -147,26 +157,56 @@ class KPI_earn():
                             SQLDATA['overtime_line'] = KPI_earn.overtimeline('18:00', SQLDATA['pm'])
                         except:
                             pass
-                    print(str('每人每天：') + ' : ' + str(SQLDATA))
+                    # print(str('每人每天：') + ' : ' + str(SQLDATA))
                     LT.append(SQLDATA)
                     # print(LT)
-                    print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+                    # print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
                 except:
                     # 如果不能转为数字则为信息内容
-                    print(str(ri) + ' : ' + str(ucsname[ri]))
+                    # print(str(ri) + ' : ' + str(ucsname[ri]))
+                    pass
         return LT
 
-    def saveTomysql(saveinfomation):
-        conn = pymysql.connect(
-            host='localhost',
-            user='spiderinc',
-            passwd='spiderinc',
-            port=3306,
-            charset='utf8',
-            database='spiderinc'
-        )
-        cur = conn.cursor()
-        for i in saveinfomation:
+
+class SaveData():
+
+    def saveTomysql(sql):
+        PropertiesFile = r'../filename.properties'
+        hostname = Properties(PropertiesFile).getProperties()['mysql']['local']['host']
+        database = Properties(PropertiesFile).getProperties()['mysql']['local']['database']
+        port = int(Properties(PropertiesFile).getProperties()['mysql']['local']['port'])
+        username = Properties(PropertiesFile).getProperties()['mysql']['local']['username']
+        passwd = Properties(PropertiesFile).getProperties()['mysql']['local']['passwd']
+        charset = Properties(PropertiesFile).getProperties()['mysql']['local']['charset']
+        conn = pymysql.connect(host=hostname,
+                               user=username,
+                               passwd=passwd,
+                               port=port,
+                               db=database,
+                               charset=charset
+                               )
+        try:
+            cur = conn.cursor()
+        except Exception as e:
+            print(e)
+            print('-------------连接数据库失败-------------')
+        # 执行sql
+        else:
+            try:
+                # print(sql)
+                # mysql执行sql语句
+                cur.execute(sql)
+            except Exception as e:
+                print(e)
+                print('---SQL语法错误，执行失败---' + sql)
+            else:
+                conn.commit()
+                print('Keep Going ……')
+                # print('执行成功，数据成功写入')
+
+    def builder(savelib):
+        DATA = []
+        for i in savelib:
             # 数据库每一行的信息
             fileds = []
             values = []
@@ -177,14 +217,37 @@ class KPI_earn():
             keys = str(fileds).replace('[', '').replace(']', '').replace("'", '')
             value = str(values).replace('[', '').replace(']', '')
             sql = 'insert into kpi_signin(' + keys + ')values(' + value + ');'
-            cur.execute(sql)
-            print('saveing…………')
+            DATA.append(sql)
+        return DATA
 
+    def builder2(savelib):
+        DATA = []
+        for i in savelib:
+            # 数据库每一行的信息
+            fileds = []
+            values = []
 
-fileDIR = r'../file/6moth.xlsx'
-ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
+            line = i
+            for fi in line:
+                fileds.append(fi)
+                values.append(line[fi])
+            keys = str(fileds).replace('[', '').replace(']', '').replace("'", '')
+            value = str(values).replace('[', '').replace(']', '')
+            DATA.append(value)
+        DATAS = str(DATA).replace('[', '(').replace(']', ')')
+        sql = 'insert into kpi_signin(' + keys + ')values(' + value + ');'
+        DATA.append(sql)
+        return DATA
 
-saveinfomation = KPI_earn.signINdata('2018','06')
-KPI_earn.saveTomysql(saveinfomation)
+if __name__ == '__main__':
+    fileDIR = r'../file/6moth.xlsx'
+    ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
+    saveinfomation = KPI_earn.signINdata('2018', '06', ucslist)
+    sqlinfo = SaveData.builder(saveinfomation)
+    for i in sqlinfo:
+        print(i)
+        SaveData.saveTomysql(i)
 
+# fileDIR = r'../file/6moth.xlsx'
+# print(KPI_earn.getdaka(KPI_earn, fileDIR))
 
