@@ -38,15 +38,16 @@
 # @ContactPhone : 13121961510
 # @Date  : ${DATE} - ${TIME}
 # @Desc  :
+import datetime
 
+import pymysql
 import xlrd
 import xlwt
 
 
-
-
 class KPI_earn():
-    def sheetinfo(excels, sheetx, nowx):
+
+    def sheetinfo(self, excels, sheetx, nowx):
         libR = {}
         libR['没有打卡日期'] = []
         libR['打卡异常日期'] = []
@@ -63,10 +64,10 @@ class KPI_earn():
                     libR['打卡异常日期'].append(str(days))
                     # print('打卡异常日期')
                     if moring > '13:00':
-                        moring = '-'
+                        moring = '09:00'
                         night = daka[0]
                     elif moring < '13:00':
-                        night = '-'
+                        night = '17:30'
                 else:
                     night = daka[-2]
 
@@ -91,16 +92,99 @@ class KPI_earn():
         for i in range(9, numrows + 1):
             if i % 2 == 1:
                 name = excel.sheet_by_index(0).row_values(i - 1)[10]
-                namelist[name] = KPI_earn.sheetinfo(excel, 0, i)
+                namelist[name] = KPI_earn.sheetinfo(KPI_earn,excel, 0, i)
             else:
                 continue
 
         return namelist
 
+    def overtimeline(base, beijian):
+        realdate = datetime.datetime.strptime(beijian, '%H:%M')
+        based = datetime.datetime.strptime(base, '%H:%M')
+        if based > realdate:
+            jiaban = realdate - realdate
+        else:
+            jiaban = realdate - based
+        timeline = str(int(int(jiaban.seconds) / 1800) * 0.5)
+        return timeline
 
-fileDIR = r'../file/7月打卡记录.xlsx'
+    def signINdata(fileyear: str, filemonth: str):
+        LT = []
+
+        # 遍历全公司的人名
+        for i in ucslist:
+            # 声明每个人的一个月的打卡记录
+            ucsname = ucslist[i]
+            # 遍历这一个月的打卡记录
+            for ri in ucsname:
+                SQLDATA = {}
+                SQLDATA['real_name'] = real_name = str(i)
+                try:
+                    day = int(ri)
+                    if day < 10:
+                        strday = '0' + str(day)
+                    else:
+                        strday = str(day)
+                    SQLDATA['M_day'] = filedate = str(str(fileyear) + str(filemonth) + strday)
+                    SQLDATA['ISweekday'] = weekdays = datetime.datetime.strptime(filedate, '%Y%m%d').weekday()
+                    SQLDATA['real_am'] = am = ucsname[ri]['am']
+                    SQLDATA['real_pm'] = pm = ucsname[ri]['pm']
+
+                    if am == '-':
+                        SQLDATA['am'] = '09:00'
+                    else:
+                        SQLDATA['am'] = am
+                    if pm == '-':
+                        SQLDATA['pm'] = '17:30'
+                    else:
+                        SQLDATA['pm'] = pm
+                    if am == '-' and pm == '-':
+                        SQLDATA['pm'] = '-'
+                        SQLDATA['am'] = '-'
+                        SQLDATA['overtime_line'] = '-'
+                    else:
+                        try:
+                            SQLDATA['overtime_line'] = KPI_earn.overtimeline('18:00', SQLDATA['pm'])
+                        except:
+                            pass
+                    print(str('每人每天：') + ' : ' + str(SQLDATA))
+                    LT.append(SQLDATA)
+                    # print(LT)
+                    print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+                except:
+                    # 如果不能转为数字则为信息内容
+                    print(str(ri) + ' : ' + str(ucsname[ri]))
+        return LT
+
+    def saveTomysql(saveinfomation):
+        conn = pymysql.connect(
+            host='localhost',
+            user='spiderinc',
+            passwd='spiderinc',
+            port=3306,
+            charset='utf8',
+            database='spiderinc'
+        )
+        cur = conn.cursor()
+        for i in saveinfomation:
+            # 数据库每一行的信息
+            fileds = []
+            values = []
+            line = i
+            for fi in line:
+                fileds.append(fi)
+                values.append(line[fi])
+            keys = str(fileds).replace('[', '').replace(']', '').replace("'", '')
+            value = str(values).replace('[', '').replace(']', '')
+            sql = 'insert into kpi_signin(' + keys + ')values(' + value + ');'
+            cur.execute(sql)
+            print('saveing…………')
+
+
+fileDIR = r'../file/6moth.xlsx'
 ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
-for i in ucslist:
-    print(i)
-    print(ucslist[i])
+
+saveinfomation = KPI_earn.signINdata('2018','06')
+KPI_earn.saveTomysql(saveinfomation)
+
 
