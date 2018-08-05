@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
+"""
                             _ooOoo_
                            o8888888o
                            88" . "88
@@ -31,7 +31,7 @@
                   奔驰宝马贵者趣，公交自行程序员。
                   别人笑我忒疯癫，我笑自己命太贱；
                   不见满街漂亮妹，哪个归得程序员？
-'''
+"""
 # @File  : ${NAME}.py
 # @Author: huguangzhi
 # @ContactEmail : huguangzhi@ucsdigital.com.com
@@ -40,10 +40,10 @@
 # @Desc  :
 import datetime
 from Util import Properties
-
+from xlutils.filter import process, XLRDReader, XLWTWriter
 import pymysql
 import xlrd
-import xlwt
+from xlutils.copy import copy
 
 
 class KPI_earn():
@@ -52,6 +52,7 @@ class KPI_earn():
         libR = {}
         libR['没有打卡日期'] = []
         libR['打卡异常日期'] = []
+        libR['正常打卡加班日期'] = []
         rownumvalues = excels.sheet_by_index(sheetx).row_values(nowx)
         days = 1
         for dates in rownumvalues:
@@ -71,6 +72,8 @@ class KPI_earn():
                         night = '17:30'
                 else:
                     night = daka[-2]
+                    if night > '18:30':
+                        libR['正常打卡加班日期'].append(str(days))
 
                 libR[str(days)]['am'] = moring
                 libR[str(days)]['pm'] = night
@@ -90,7 +93,7 @@ class KPI_earn():
         excel = xlrd.open_workbook(filePath)
         numrows = excel.sheet_by_index(0).nrows
 
-        for i in range(9, numrows + 1):
+        for i in range(7, numrows + 1):
             if i % 2 == 1:
                 name = excel.sheet_by_index(0).row_values(i - 1)[10]
                 namelist[name] = KPI_earn.sheetinfo(KPI_earn,excel, 0, i)
@@ -108,7 +111,6 @@ class KPI_earn():
             jiaban = realdate - based
         timeline = str(int(int(jiaban.seconds) / 1800) * 0.5)
         return timeline
-
 
     def signINdata(fileyear: str, filemonth: str, ucslist):
         # 这是一个数据清洗，将数据清洗为
@@ -148,7 +150,8 @@ class KPI_earn():
                         SQLDATA['pm'] = '17:30'
                     else:
                         SQLDATA['pm'] = pm
-                    if am == '-' and pm == '-':
+
+                    if am == '-' or pm == '-' or pm < '18:30':
                         SQLDATA['pm'] = '-'
                         SQLDATA['am'] = '-'
                         SQLDATA['overtime_line'] = '-'
@@ -166,6 +169,79 @@ class KPI_earn():
                     # print(str(ri) + ' : ' + str(ucsname[ri]))
                     pass
         return LT
+
+    # 获取加班信息
+    def overinfo(year: str, month: str, ucslist):
+        '''定义变量
+            @name 人名，世纪美映所有参与打卡的员工
+            @nameinfo 每个人的当月打卡的所有记录信息
+            @oneinfo 每个人的每一项的信息内容,包括打卡异常的日期，没有打卡的日期以及每天打卡的信息
+        '''
+        for name in ucslist:
+            print('正在处理' + str(name) + '的打卡记录')
+            nameinfo = ucslist[name]
+            for oneinfo in nameinfo:
+                if oneinfo == '没有打卡日期':
+                    signNone = '%s年%s月 '%(year,month)+name + ' 共计有%d天没有打卡' % len(nameinfo[oneinfo])
+                    print(signNone)
+                    if len(nameinfo[oneinfo]) != 0:
+                        signNoneList = '有这几天没有打卡：' + str(nameinfo[oneinfo])
+                        print(signNoneList)
+                    continue
+
+                elif oneinfo == '打卡异常日期':
+                    signErr = name + ' 共计有%d天打卡异常' % len(nameinfo[oneinfo])
+                    print(signErr)
+                    if len(nameinfo[oneinfo]) != 0:
+                        signErrList = '有这几天打卡异常：' + str(nameinfo[oneinfo])
+                        print(signErrList)
+                        print('这些天的打卡时间如下：')
+                        for ERR in nameinfo[oneinfo]:
+                            print(nameinfo[ERR])
+                    continue
+
+                elif oneinfo == '正常打卡加班日期':
+                    signOver = name + ' 共计有%d天加班' % len(nameinfo[oneinfo])
+                    print(signOver)
+                    if len(nameinfo[oneinfo]) != 0:
+                        signErrList = '有这几天打卡异常：' + str(nameinfo[oneinfo])
+                        print('这几天加班时间如下：')
+                        for ERR in nameinfo[oneinfo]:
+                            print(nameinfo[ERR])
+                    continue
+
+                else:
+                    workingDAY = nameinfo[oneinfo]
+                    am = workingDAY['am']
+                    pm = workingDAY['pm']
+                    if am == '-' or pm == '-' or pm < '18:30':
+                        continue
+                    else:
+                        try:
+                            timelines = KPI_earn.overtimeline('18:00', pm)
+                        except:
+                            print('计算加班时长 ERROR')
+
+            print('-----------------分割线---------------------')
+
+    # 获取存储Excel的加班信息
+    def getOverInfoToExcel(self, year: str, month: str, ucslist):
+        overlist = {}
+        for name in ucslist:
+            overlist[name] = {}
+            for D in ucslist[name]['正常打卡加班日期']:
+                if int(D) < 10:
+                    DA = str(year) + '-' + str(month) + '-0' + D
+                else:
+                    DA = str(year) + '-' + str(month) + '-' + D
+                overlist[name][DA] = {}
+                overlist[name][DA]['begin'] = ucslist[name][D]['am']
+                overlist[name][DA]['end'] = ucslist[name][D]['pm']
+                overlist[name][DA]['timeline'] = KPI_earn.overtimeline('18:00', ucslist[name][D]['pm'])
+
+        return overlist
+
+
 
 
 class SaveData():
@@ -232,21 +308,88 @@ class SaveData():
                 fileds.append(fi)
                 values.append(line[fi])
             keys = str(fileds).replace('[', '').replace(']', '').replace("'", '')
-            value = str(values).replace('[', '').replace(']', '')
+            value = str(values).replace('[', '(').replace(']', ')')
             DATA.append(value)
-        DATAS = str(DATA).replace('[', '(').replace(']', ')')
-        sql = 'insert into kpi_signin(' + keys + ')values(' + value + ');'
-        DATA.append(sql)
+            DATAS = str(DATA).replace('[', '').replace(']', '').replace('"', '')
+            sql = 'insert into kpi_signin(' + keys + ')values ' + DATAS + ' ;'
+            DATA.append(sql)
         return DATA
+
+    # 加班信息写入excel表格
+    def saveOverToExcel(self, file, name, info):
+
+        tablefile = xlrd.open_workbook(file, formatting_info=True, on_demand=True)
+        excel, s = SaveData.copy2(tablefile)
+        rbs = tablefile.get_sheet(0)
+        styles = s[rbs.cell_xf_index(1, 5)]
+        styles1 = s[rbs.cell_xf_index(4, 0)]
+        styles2 = s[rbs.cell_xf_index(4, 1)]
+        styles3 = s[rbs.cell_xf_index(4, 2)]
+        styles4 = s[rbs.cell_xf_index(4, 3)]
+
+        # excel = copy(tablefile)  # 用xlutils提供的copy方法将xlrd的对象转化为xlwt的对象
+        table = excel.get_sheet(0)
+        tablefile.release_resources()  # 关闭模板文件
+        table.write(1, 5, name, styles)
+        row = 3
+        for save in info:
+            table.write(int(row), 0, save, styles1)
+            table.write(row, 1, info[save]['begin'], styles2)
+            table.write(row, 2, info[save]['end'], styles3)
+            table.write(row, 3, info[save]['timeline'], styles4)
+            print(float(info[save]['timeline']))
+            row += 1
+
+        excel.save('../exec/'+str(name)+'-加班统计表.xls')
+
+    def copy2(wb):
+        w = XLWTWriter()
+        process(XLRDReader(wb, '统计表.xls'), w)
+        return w.output[0][1], w.style_list
 
 if __name__ == '__main__':
     fileDIR = r'../file/6moth.xlsx'
+    savefilename = r'../file/统计表.xls'
     ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
-    saveinfomation = KPI_earn.signINdata('2018', '06', ucslist)
-    sqlinfo = SaveData.builder(saveinfomation)
-    for i in sqlinfo:
-        print(i)
-        SaveData.saveTomysql(i)
+    overlist = KPI_earn.getOverInfoToExcel(KPI_earn, '2018', '06', ucslist)
+    for name in overlist:
+        print('正在处理'+name+'的信息')
+        overinfo = overlist[name]
+        SaveData.saveOverToExcel(SaveData,file=savefilename, name=name, info=overinfo)
+
+
+
+
+
+    """
+    {name:{date:{begin:'',end:'',timeline:''},
+           date:begin:'',end:'',timeline:'',
+           date:begin:'',end:'',timeline:''……},
+     name:{date:begin:'',end:'',timeline:'',
+           date:begin:'',end:'',timeline:'',
+           date:begin:'',end:'',timeline:''……},
+     name:{date:begin:'',end:'',timeline:'',
+           date:begin:'',end:'',timeline:'',
+           date:begin:'',end:'',timeline:''……},}
+    """
+
+
+    #
+    # dates = '20180601'
+    # KPI_earn.saveOverToExcel(KPI_earn, savefilename, dates, begin='19:32',end='45:65',timeline='2.6')
+
+    # 数据打印
+    # KPI_earn.overinfo('2018', '06', ucslist)
+
+
+
+
+    # 开始创建入库方式
+#     saveinfomation = KPI_earn.signINdata('2018', '06', ucslist)
+#     sqlinfo = SaveData.builder2(saveinfomation)
+#     for i in sqlinfo:
+#         print(i)
+#         # SaveData.saveTomysql(i)
 
 # fileDIR = r'../file/6moth.xlsx'
 # print(KPI_earn.getdaka(KPI_earn, fileDIR))

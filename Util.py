@@ -40,7 +40,7 @@
 # @ContactPhone : 13121961510 
 # @Date  : 2018-07-16 - 16:39
 # @Desc  : 外部配置参数文件
-
+from xlutils.filter import process, XLRDReader, XLWTWriter
 
 class Properties(object):
 
@@ -74,3 +74,8 @@ class Properties(object):
         else:
             pro_file.close()
         return self.properties
+
+    def copy2(wb):
+        w = XLWTWriter()
+        process(XLRDReader(wb, '统计表.xls'), w)
+        return w.output[0][1], w.style_list
