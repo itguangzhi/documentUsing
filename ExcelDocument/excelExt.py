@@ -47,16 +47,19 @@ from xlutils.copy import copy
 
 
 class KPI_earn():
-
+    # 数据返回的当月打卡信息，包括未打卡时间和打卡异常时间，以及每天打卡的时间
     def sheetinfo(self, excels, sheetx, nowx):
         libR = {}
+        deptvalue = excels.sheet_by_index(sheetx).row_values(nowx - 1)[20]
+        libR['部门'] = deptvalue
         libR['没有打卡日期'] = []
         libR['打卡异常日期'] = []
         libR['正常打卡加班日期'] = []
+
         rownumvalues = excels.sheet_by_index(sheetx).row_values(nowx)
         days = 1
         for dates in rownumvalues:
-            # print(str(days) + '日')
+
             libR[str(days)] = {}
             if dates != '':
                 daka = str(dates).split('\n')
@@ -99,9 +102,8 @@ class KPI_earn():
                 namelist[name] = KPI_earn.sheetinfo(KPI_earn,excel, 0, i)
             else:
                 continue
-
         return namelist
-
+    #  计算加班时长
     def overtimeline(base, beijian):
         realdate = datetime.datetime.strptime(beijian, '%H:%M')
         based = datetime.datetime.strptime(base, '%H:%M')
@@ -169,7 +171,6 @@ class KPI_earn():
                     # print(str(ri) + ' : ' + str(ucsname[ri]))
                     pass
         return LT
-
     # 获取加班信息
     def overinfo(year: str, month: str, ucslist):
         '''定义变量
@@ -223,7 +224,6 @@ class KPI_earn():
                             print('计算加班时长 ERROR')
 
             print('-----------------分割线---------------------')
-
     # 获取存储Excel的加班信息
     def getOverInfoToExcel(self, year: str, month: str, ucslist, overbegin='18:00'):
         """
@@ -364,6 +364,7 @@ if __name__ == '__main__':
     month = '06'
 
     ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
+    print(ucslist)
 
     overlist = KPI_earn.getOverInfoToExcel(KPI_earn, year, month, ucslist)
     for name in overlist:
