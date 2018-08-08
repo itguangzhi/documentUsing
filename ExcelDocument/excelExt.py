@@ -226,6 +226,17 @@ class KPI_earn():
 
     # 获取存储Excel的加班信息
     def getOverInfoToExcel(self, year: str, month: str, ucslist):
+        """
+            {name:{date:{begin:'',end:'',timeline:''},
+                   date:begin:'',end:'',timeline:'',
+                   date:begin:'',end:'',timeline:''……},
+             name:{date:begin:'',end:'',timeline:'',
+                   date:begin:'',end:'',timeline:'',
+                   date:begin:'',end:'',timeline:''……},
+             name:{date:begin:'',end:'',timeline:'',
+                   date:begin:'',end:'',timeline:'',
+                   date:begin:'',end:'',timeline:''……},}
+            """
         overlist = {}
         for name in ucslist:
             overlist[name] = {}
@@ -334,7 +345,8 @@ class SaveData():
         row = 3
         for save in info:
             table.write(int(row), 0, save, styles1)
-            table.write(row, 1, info[save]['begin'], styles2)
+            # table.write(row, 1, info[save]['begin'], styles2)
+            table.write(row, 1, '18:00', styles2)
             table.write(row, 2, info[save]['end'], styles3)
             table.write(row, 3, info[save]['timeline'], styles4)
             print(float(info[save]['timeline']))
@@ -351,6 +363,7 @@ if __name__ == '__main__':
     fileDIR = r'../file/6moth.xlsx'
     savefilename = r'../file/统计表.xls'
     ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
+    print(ucslist)
     overlist = KPI_earn.getOverInfoToExcel(KPI_earn, '2018', '06', ucslist)
     for name in overlist:
         print('正在处理'+name+'的信息')
@@ -360,18 +373,6 @@ if __name__ == '__main__':
 
 
 
-
-    """
-    {name:{date:{begin:'',end:'',timeline:''},
-           date:begin:'',end:'',timeline:'',
-           date:begin:'',end:'',timeline:''……},
-     name:{date:begin:'',end:'',timeline:'',
-           date:begin:'',end:'',timeline:'',
-           date:begin:'',end:'',timeline:''……},
-     name:{date:begin:'',end:'',timeline:'',
-           date:begin:'',end:'',timeline:'',
-           date:begin:'',end:'',timeline:''……},}
-    """
 
 
     #
