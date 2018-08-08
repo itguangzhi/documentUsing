@@ -225,7 +225,7 @@ class KPI_earn():
             print('-----------------分割线---------------------')
 
     # 获取存储Excel的加班信息
-    def getOverInfoToExcel(self, year: str, month: str, ucslist):
+    def getOverInfoToExcel(self, year: str, month: str, ucslist, overbegin='18:00'):
         """
             {name:{date:{begin:'',end:'',timeline:''},
                    date:begin:'',end:'',timeline:'',
@@ -248,11 +248,9 @@ class KPI_earn():
                 overlist[name][DA] = {}
                 overlist[name][DA]['begin'] = ucslist[name][D]['am']
                 overlist[name][DA]['end'] = ucslist[name][D]['pm']
-                overlist[name][DA]['timeline'] = KPI_earn.overtimeline('18:00', ucslist[name][D]['pm'])
+                overlist[name][DA]['timeline'] = KPI_earn.overtimeline(overbegin, ucslist[name][D]['pm'])
 
         return overlist
-
-
 
 
 class SaveData():
@@ -289,7 +287,6 @@ class SaveData():
             else:
                 conn.commit()
                 print('Keep Going ……')
-                # print('执行成功，数据成功写入')
 
     def builder(savelib):
         DATA = []
@@ -327,12 +324,12 @@ class SaveData():
         return DATA
 
     # 加班信息写入excel表格
-    def saveOverToExcel(self, file, name, info):
+    def saveOverToExcel(self, file, name, info, begin = '18:00', excelanme = '加班统计表'):
 
         tablefile = xlrd.open_workbook(file, formatting_info=True, on_demand=True)
         excel, s = SaveData.copy2(tablefile)
         rbs = tablefile.get_sheet(0)
-        styles = s[rbs.cell_xf_index(1, 5)]
+        styles = s[rbs.cell_xf_index(1, 5)] # 引用模板的单元格格式
         styles1 = s[rbs.cell_xf_index(4, 0)]
         styles2 = s[rbs.cell_xf_index(4, 1)]
         styles3 = s[rbs.cell_xf_index(4, 2)]
@@ -346,13 +343,14 @@ class SaveData():
         for save in info:
             table.write(int(row), 0, save, styles1)
             # table.write(row, 1, info[save]['begin'], styles2)
-            table.write(row, 1, '18:00', styles2)
+            table.write(row, 1, begin, styles2)
             table.write(row, 2, info[save]['end'], styles3)
-            table.write(row, 3, info[save]['timeline'], styles4)
-            print(float(info[save]['timeline']))
-            row += 1
+            timeline = float(info[save]['timeline'])
+            table.write(row, 3, timeline, styles4)
+            # table.write(row, 3, info[save]['timeline'], styles4)
 
-        excel.save('../exec/'+str(name)+'-加班统计表.xls')
+            row += 1
+        excel.save('../exec/'+str(name)+'-'+excelanme+'.xls')
 
     def copy2(wb):
         w = XLWTWriter()
@@ -361,14 +359,17 @@ class SaveData():
 
 if __name__ == '__main__':
     fileDIR = r'../file/6moth.xlsx'
-    savefilename = r'../file/统计表.xls'
+    modlefile = r'../file/统计表.xls'
+    year = '2018'
+    month = '06'
+
     ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
-    print(ucslist)
-    overlist = KPI_earn.getOverInfoToExcel(KPI_earn, '2018', '06', ucslist)
+
+    overlist = KPI_earn.getOverInfoToExcel(KPI_earn, year, month, ucslist)
     for name in overlist:
         print('正在处理'+name+'的信息')
         overinfo = overlist[name]
-        SaveData.saveOverToExcel(SaveData,file=savefilename, name=name, info=overinfo)
+        SaveData.saveOverToExcel(SaveData,file=modlefile, name=name, info=overinfo)
 
 
 
