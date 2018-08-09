@@ -39,6 +39,8 @@
 # @Date  : ${DATE} - ${TIME}
 # @Desc  :
 import datetime
+import tkinter as tk
+
 from Util import Properties
 from xlutils.filter import process, XLRDReader, XLWTWriter
 import pymysql
@@ -357,20 +359,42 @@ class SaveData():
         process(XLRDReader(wb, '统计表.xls'), w)
         return w.output[0][1], w.style_list
 
+class APP:
+    def __init__(self, master):
+        frame = tk.Frame(master)
+        frame.pack()
+
+        self.button_1 = tk.Button(frame,
+                                  text='按钮1',
+                                  bg='black',
+                                  fg='whilt',
+                                  command=self.exportExcel)
+        self.button_1.pack()
+
+
+
+    def exportExcel(self):
+        fileDIR = r'../file/6moth.xlsx'
+        modlefile = r'../file/统计表.xls'
+        year = '2018'
+        month = '06'
+
+        ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
+        print(ucslist)
+        overlist = KPI_earn.getOverInfoToExcel(KPI_earn, year, month, ucslist)
+        for name in overlist:
+            print('正在处理' + name + '的信息')
+            overinfo = overlist[name]
+            SaveData.saveOverToExcel(SaveData, file=modlefile, name=name, info=overinfo)
+
 if __name__ == '__main__':
-    fileDIR = r'../file/6moth.xlsx'
-    modlefile = r'../file/统计表.xls'
-    year = '2018'
-    month = '06'
 
-    ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
-    print(ucslist)
+    root = tk.Tk()
 
-    overlist = KPI_earn.getOverInfoToExcel(KPI_earn, year, month, ucslist)
-    for name in overlist:
-        print('正在处理'+name+'的信息')
-        overinfo = overlist[name]
-        SaveData.saveOverToExcel(SaveData,file=modlefile, name=name, info=overinfo)
+    app = APP(root)
+
+    root.mainloop()
+
 
 
 
