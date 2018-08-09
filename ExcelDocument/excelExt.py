@@ -359,18 +359,100 @@ class SaveData():
         process(XLRDReader(wb, '统计表.xls'), w)
         return w.output[0][1], w.style_list
 
+
+global photo
+
 class APP:
+
     def __init__(self, master):
-        frame = tk.Frame(master)
-        frame.pack()
+        titlelable = tk.Label(master,
+                              text='广志大兄弟打卡转译器',
+                              font=('黑体', 20),
+                              compound=tk.TOP,
+                              fg='black')
+        titlelable.pack(pady=10)
 
-        self.button_1 = tk.Button(frame,
-                                  text='按钮1',
+        frame1 = tk.Frame(master)
+        frame1.pack(side=tk.LEFT)
+        frame11 = tk.Frame(frame1)
+        frame11.pack(pady=5)
+        frame12 = tk.Frame(frame1)
+        frame12.pack(pady=5)
+        frame13 = tk.Frame(frame1)
+        frame13.pack(pady=5)
+        frame14 = tk.Frame(frame1)
+        frame14.pack(pady=5)
+
+        frame2 = tk.Frame(master)
+        frame2.pack(side=tk.RIGHT)
+
+        self.lable_1 = tk.Label(frame2,
+                                image=photo,
+                                compound=tk.CENTER)
+        self.lable_1.pack()
+        self.lable_1 = tk.Label(frame11, text='请输入姓名:',
+                                font=('宋体', 12, 'bold'))
+        self.lable_1.pack(side=tk.LEFT)
+        self.input1 = tk.Entry(frame11, bg='#dcd9d9', bd=1, width=8)
+        self.input1.pack(side=tk.RIGHT)
+
+        self.lable_2 = tk.Label(frame12,
+                                text='请设置打卡记录时间',
+                                font=('宋体', 12, 'bold'))
+        self.lable_2.pack(side=tk.TOP)
+        self.input2 = tk.Entry(frame12, bg='#dcd9d9', bd=1, width=5)
+        self.input2.pack(side=tk.LEFT)
+        self.lable_3 = tk.Label(frame12,
+                                text='年',
+                                font=('宋体', 12))
+        self.lable_3.pack(side=tk.LEFT, pady=5)
+        self.input3 = tk.Entry(frame12, bg='#dcd9d9', bd=1, width=3)
+        self.input3.pack(side=tk.LEFT, pady=5)
+        self.lable_4 = tk.Label(frame12,
+                                text='月',
+                                font=('宋体', 12))
+        self.lable_4.pack(side=tk.LEFT, pady=5)
+
+        self.button_1 = tk.Button(frame13,
+                                  text='选择表单',
                                   bg='black',
-                                  fg='whilt',
-                                  command=self.exportExcel)
-        self.button_1.pack()
+                                  fg='white',
+                                  command=self.exportExcel,
+                                  font=('宋体', 12))
+        self.button_1.pack(side=tk.LEFT, padx=15)
 
+        self.button_2 = tk.Button(frame13,
+                                  text='输出位置',
+                                  bg='black',
+                                  fg='white',
+                                  command=self.exportExcel,
+                                  font=('宋体', 12))
+        self.button_2.pack(side=tk.RIGHT, padx=15)
+
+        self.button_3 = tk.Button(frame14,
+                                  text='使用须知',
+                                  bg='black',
+                                  fg='white',
+                                  command=self.exportExcel,
+                                  font=('宋体', 12))
+        self.button_3.pack(side=tk.LEFT, padx=15)
+
+        self.button_4 = tk.Button(frame14,
+                                  text='开始生成',
+                                  bg='black',
+                                  fg='white',
+                                  command=self.exportExcel,
+                                  font=('宋体', 12))
+        self.button_4.pack(side=tk.RIGHT, padx=15)
+
+    def iknow(self):
+        var = tk.StringVar()
+        var.set()
+
+    def getInput(self):
+        name = self.input1.get()
+        year = self.input2.get()
+        month = self.input3.get()
 
 
     def exportExcel(self):
@@ -390,8 +472,11 @@ class APP:
 if __name__ == '__main__':
 
     root = tk.Tk()
-
+    photo = tk.PhotoImage(file=r'..\file\you.gif')
+    root.geometry('500x360')
+    root.resizable(width=False, height=False)
     app = APP(root)
+
 
     root.mainloop()
 
