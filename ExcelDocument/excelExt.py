@@ -101,10 +101,11 @@ class KPI_earn():
         for i in range(7, numrows + 1):
             if i % 2 == 1:
                 name = excel.sheet_by_index(0).row_values(i - 1)[10]
-                namelist[name] = KPI_earn.sheetinfo(KPI_earn,excel, 0, i)
+                namelist[name] = KPI_earn.sheetinfo(KPI_earn, excel, 0, i)
             else:
                 continue
         return namelist
+
     #  计算加班时长
     def overtimeline(base, beijian):
         realdate = datetime.datetime.strptime(beijian, '%H:%M')
@@ -173,6 +174,7 @@ class KPI_earn():
                     # print(str(ri) + ' : ' + str(ucsname[ri]))
                     pass
         return LT
+
     # 获取加班信息
     def overinfo(year: str, month: str, ucslist):
         '''定义变量
@@ -185,7 +187,7 @@ class KPI_earn():
             nameinfo = ucslist[name]
             for oneinfo in nameinfo:
                 if oneinfo == '没有打卡日期':
-                    signNone = '%s年%s月 '%(year,month)+name + ' 共计有%d天没有打卡' % len(nameinfo[oneinfo])
+                    signNone = '%s年%s月 ' % (year, month) + name + ' 共计有%d天没有打卡' % len(nameinfo[oneinfo])
                     print(signNone)
                     if len(nameinfo[oneinfo]) != 0:
                         signNoneList = '有这几天没有打卡：' + str(nameinfo[oneinfo])
@@ -226,6 +228,7 @@ class KPI_earn():
                             print('计算加班时长 ERROR')
 
             print('-----------------分割线---------------------')
+
     # 获取存储Excel的加班信息
     def getOverInfoToExcel(self, year: str, month: str, ucslist, overbegin='18:00'):
         """
@@ -326,12 +329,12 @@ class SaveData():
         return DATA
 
     # 加班信息写入excel表格
-    def saveOverToExcel(self, file, name, info, begin = '18:00', excelanme = '加班统计表'):
+    def saveOverToExcel(self, file, name, info, begin='18:00', excelanme='加班统计表'):
 
         tablefile = xlrd.open_workbook(file, formatting_info=True, on_demand=True)
         excel, s = SaveData.copy2(tablefile)
         rbs = tablefile.get_sheet(0)
-        styles = s[rbs.cell_xf_index(1, 5)] # 引用模板的单元格格式
+        styles = s[rbs.cell_xf_index(1, 5)]  # 引用模板的单元格格式
         styles1 = s[rbs.cell_xf_index(4, 0)]
         styles2 = s[rbs.cell_xf_index(4, 1)]
         styles3 = s[rbs.cell_xf_index(4, 2)]
@@ -352,7 +355,7 @@ class SaveData():
             # table.write(row, 3, info[save]['timeline'], styles4)
 
             row += 1
-        excel.save('../exec/'+str(name)+'-'+excelanme+'.xls')
+        excel.save('../exec/' + str(name) + '-' + excelanme + '.xls')
 
     def copy2(wb):
         w = XLWTWriter()
@@ -361,6 +364,7 @@ class SaveData():
 
 
 global photo
+
 
 class APP:
 
@@ -433,7 +437,7 @@ class APP:
                                   text='使用须知',
                                   bg='black',
                                   fg='white',
-                                  command=self.exportExcel,
+                                  command=self.iknow,
                                   font=('宋体', 12))
         self.button_3.pack(side=tk.LEFT, padx=15)
 
@@ -453,13 +457,16 @@ class APP:
         name = self.input1.get()
         year = self.input2.get()
         month = self.input3.get()
-
+        return
 
     def exportExcel(self):
         fileDIR = r'../file/6moth.xlsx'
+        fileDIR = self.input1.get()
         modlefile = r'../file/统计表.xls'
         year = '2018'
+        year = self.input2.get()
         month = '06'
+        month = self.input3.get()
 
         ucslist = KPI_earn.getdaka(KPI_earn, fileDIR)
         print(ucslist)
@@ -469,22 +476,15 @@ class APP:
             overinfo = overlist[name]
             SaveData.saveOverToExcel(SaveData, file=modlefile, name=name, info=overinfo)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     root = tk.Tk()
     photo = tk.PhotoImage(file=r'..\file\you.gif')
     root.geometry('500x360')
     root.resizable(width=False, height=False)
     app = APP(root)
 
-
     root.mainloop()
-
-
-
-
-
-
 
     #
     # dates = '20180601'
@@ -492,9 +492,6 @@ if __name__ == '__main__':
 
     # 数据打印
     # KPI_earn.overinfo('2018', '06', ucslist)
-
-
-
 
     # 开始创建入库方式
 #     saveinfomation = KPI_earn.signINdata('2018', '06', ucslist)
@@ -505,4 +502,3 @@ if __name__ == '__main__':
 
 # fileDIR = r'../file/6moth.xlsx'
 # print(KPI_earn.getdaka(KPI_earn, fileDIR))
-
